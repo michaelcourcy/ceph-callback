@@ -2,8 +2,7 @@
 
 ## Diclaimer 1 
 
-This solution is a workaround, it is planned to integrate a solution for using STANDAR_IA directly in Kasten and this workaround
-will be useless.
+This solution is a workaround, at some point (date unknown) Kasten will integrate a solution for using STANDARD_IA directly in Kasten and this workaround will be useless.
 
 ## Disclaimer 2 
 
@@ -18,12 +17,14 @@ you'll have to translate the operation done with the operator in pure CEPH opera
 Kasten leverage the [Kopia](https://kopia.io/) datamover when sending the backup to the s3 object storage.
 
 Kopia create mainly 2 category of files :
-* the p file, they are blobs that store the bulk of snapshot data; they are mostly written once and not accessed again unless you restore of course or during repository compaction. Those files are the "Big" files and are good canditates for the STANDARD_IA storage class. 
+* the p file, they are blobs that store the bulk of snapshot data; they are mostly written once and not accessed again unless you restore or during repository compaction. Those files are the "Big" files and are good canditates for the STANDARD_IA storage class. 
 * the rest which is mostly files participating in the index and used to compare the most recent snapshot with the previous backup to build an incremental export. Those files need to be accessed frequently and are not good candidate for STANDARD_IA but in the same times their sizes are very small (around Kb)
 
 More details about [the files created by Kopia](https://kopia.io/docs/advanced/architecture/#content-addressable-block-storage-cabs).
 
-In order to put the p file in STANDARD_IA and keep the rest on STANDARD storageclass. Kopia provide a mechanism based on a .storageconfig file described here. 
+In order to put the p file in STANDARD_IA and keep the rest on STANDARD storageclass. Kopia provide a mechanism based on a .storageconfig file [described here](https://kopia.io/docs/advanced/storage-tiers/). 
+
+The .storageconfig file will tell Kopia to create the p file in STANDARD_IA and the rest in STANDARD storageClass.
 
 ```
 {
@@ -418,7 +419,7 @@ in the same rook-ceph namespace than the RGW service. You may have to adapt it i
 
 Deploy the external service 
 ```
-kubectl create -f ceph-callback.yaml
+kubectl create -n rook-ceph -f ceph-callback.yaml
 ```
 
 # Test 
@@ -447,12 +448,16 @@ kubectl logs -n rook-ceph deploy/ceph-callback
 
 Output 
 ```
+time="2024-02-16T08:55:10Z" level=info msg="successfully parsed the body"
+time="2024-02-16T08:55:10Z" level=info msg="bucket ceph-bkt-07f8b1c9-1814-465f-a081-cd84bf93def4"
+time="2024-02-16T08:55:10Z" level=info msg="key k10/3b7f9c5f-b082-4545-933b-950c8d7a9d0e/migration/repo/6f0791b0-cf05-4ef6-af6d-d71133486826/kopia.repository"
+time="2024-02-16T08:55:10Z" level=info msg="Successfully uploaded k10/3b7f9c5f-b082-4545-933b-950c8d7a9d0e/migration/repo/6f0791b0-cf05-4ef6-af6d-d71133486826/.storageconfig"
 time="2024-02-16T08:56:13Z" level=info msg="successfully parsed the body"
 time="2024-02-16T08:56:13Z" level=info msg="bucket ceph-bkt-07f8b1c9-1814-465f-a081-cd84bf93def4"
 time="2024-02-16T08:56:13Z" level=info msg="key k10/3b7f9c5f-b082-4545-933b-950c8d7a9d0e/migration/test-calibrate-10k-10k-backup-ceph-bckt/kopia/kopia.repository"
 time="2024-02-16T08:56:13Z" level=info msg="Successfully uploaded k10/3b7f9c5f-b082-4545-933b-950c8d7a9d0e/migration/test-calibrate-10k-10k-backup-ceph-bckt/kopia/.storageconfig"
 ```
-The .storageconfig is created. 
+The .storageconfig is created in both the collections repository and the pvc repository.
 
 Also check that the storageclass in the bucket
 ```
