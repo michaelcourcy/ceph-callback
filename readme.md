@@ -328,7 +328,7 @@ AWS_SECRET_ACCESS_KEY=$CEPH_S3_SECRET_ACCESS_KEY \
 aws --endpoint-url=http://localhost:8080 s3 ls
 ```
 
-Now you can see the bucket only visible for this user 
+This user can see the bucket created by the bucket claim 
 ```
 2024-02-13 11:09:40 ceph-bkt-07f8b1c9-1814-465f-a081-cd84bf93def4
 ```
@@ -459,7 +459,7 @@ time="2024-02-16T08:56:13Z" level=info msg="Successfully uploaded k10/3b7f9c5f-b
 ```
 The .storageconfig is created in both the collections repository and the pvc repository.
 
-Also check that the storageclass in the bucket
+Check the storageclass in the bucket
 ```
 MY_NAMESPACE=test-calibrate-10k-10k # change with the name of your namespace 
 NAMESPACE_UID=$(kubectl get ns $MY_NAMESPACE -o jsonpath='{.metadata.uid}')
@@ -472,7 +472,7 @@ s3api list-objects-v2 --bucket $BUCKET --prefix $PREFIX \
 |jq '.Contents[]| "\(.Key) \(.StorageClass)"' | sed s#$PREFIX##
 ```
 
-You notice that all the p file are in STANDARD_IA 
+
 ```
 "/.storageconfig STANDARD"
 
@@ -501,6 +501,7 @@ You notice that all the p file are in STANDARD_IA
 "/xn0_fa3195f9e35eee0167c9c9ae105100f1-s7485159f2427161b125-c1 STANDARD"
 ```
 
+You notice that all the p file are in STANDARD_IA 
 
 
 
